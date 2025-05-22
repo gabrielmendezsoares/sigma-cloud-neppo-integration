@@ -1,4 +1,4 @@
 export interface IServiceOrderDesktop {
-  service_order_number: number;
-  csid: number;
+  service_order_number: string;
+  csid: string;
 }

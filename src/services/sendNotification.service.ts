@@ -14,7 +14,7 @@ export const sendNotification = async (): Promise<void> => {
           
           try {
             await httpClientInstance.post(
-              process.env.NEPPO_SEND_MESSAGE_URL as string,
+              'https://newline.tm2digital.com/chat/api/send/message',
               {
                 "phone": satisfactionSurvey.phone,
                 "message": "msg",
@@ -37,6 +37,8 @@ export const sendNotification = async (): Promise<void> => {
               }
             );
           } catch (error: unknown) {
+            console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()) } | Name: sendNotification | Error: ${ satisfactionSurvey.phone } - ${ error instanceof Error ? error.message : String(error) }`);
+
             await prisma.neppo_satisfaction_surveys.update(
               { 
                 where: { id: satisfactionSurvey.id },
@@ -48,6 +50,6 @@ export const sendNotification = async (): Promise<void> => {
       )
     );
   } catch (error: unknown) {
-    console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.getLocalDate() } | Name: sendNotification | Error: ${ error instanceof Error ? error.message : String(error) }`);
+    console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()) } | Name: sendNotification | Error: ${ error instanceof Error ? error.message : String(error) }`);
   };
 };

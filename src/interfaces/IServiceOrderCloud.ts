@@ -1,6 +1,6 @@
 export interface IServiceOrderCloud {
-  accountCode: number;
-  id: number;
+  accountCode: string;
+  accountId: number;
   sequentialId: number;
   status: number;
 }

@@ -1,64 +1,62 @@
 import { PrismaClient } from '@prisma/client/storage/client.js';
 import { dateTimeFormatterUtil, HttpClientUtil, BearerStrategy } from '../../expressium/src/index.js';
-import { IServiceOrderCloud, IUserAndContact } from '../interfaces/index.js';
+import { ISatisfactionSurvey, IServiceOrderCloud, IUserAndContact } from '../interfaces/index.js';
 
 const prisma = new PrismaClient();
 
 export const createCloudSatisfactionSurvey = async () => { 
-  const localDate = dateTimeFormatterUtil.getLocalDate();
-  const localDateCurrentDay = localDate.getDate();
-  const localDateCurrentMonth = String(localDate.getMonth() + 1).padStart(2, '0');
-  const localDateCurrentYear = String(localDate.getFullYear()).padStart(2, '0');
+  const localDateCurrentDate = dateTimeFormatterUtil.getLocalDate();
+  const localDateCurrentDay = localDateCurrentDate.getDate();
+  const localDateCurrentMonth = String(localDateCurrentDate.getMonth() + 1).padStart(2, '0');
+  const localDateCurrentYear = String(localDateCurrentDate.getFullYear()).padStart(2, '0');
 
-  let localDateLastDay = new Date(localDate.getTime() - (7 * 24 * 60 * 60 * 1_000));
+  let localDateLastDate = new Date(localDateCurrentDate.getTime() - (7 * 24 * 60 * 60 * 1_000));
 
-  localDateLastDay = new Date(localDateLastDay.getTime() - localDateLastDay.getTimezoneOffset() * 60_000);
+  localDateLastDate = new Date(localDateLastDate.getTime() - localDateLastDate.getTimezoneOffset() * 60_000);
 
-  const localDateLastMonth = String(localDateLastDay.getMonth() + 1).padStart(2, '0');
-  const localDateLastYear = String(localDateLastDay.getFullYear()).padStart(2, '0');
+  const localDateLastDay = String(localDateLastDate.getDate()).padStart(2, '0');
+  const localDateLastMonth = String(localDateLastDate.getMonth() + 1).padStart(2, '0');
+  const localDateLastYear = String(localDateLastDate.getFullYear()).padStart(2, '0');
 
   const httpClientInstance = new HttpClientUtil.HttpClient();
 
   httpClientInstance.setAuthenticationStrategy(new BearerStrategy.BearerStrategy(process.env.SIGMA_CLOUD_BEARER_TOKEN as string));
 
   try {
+    const satisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
     const serviceOrderList = await httpClientInstance.get<IServiceOrderCloud.IServiceOrderCloud[]>(`https://api.segware.com.br/v1/serviceOrders?fromDate=${ localDateLastDay }%2F${ localDateLastMonth }%2F${ localDateLastYear }&toShowDate=${ localDateCurrentDay }%2F${ localDateCurrentMonth }%2F${ localDateCurrentYear }&dateType=CLOSING`);
-    const serviceOrderFilteredList = serviceOrderList.data.filter((serviceOrder: IServiceOrderCloud.IServiceOrderCloud): boolean => serviceOrder.status === 4);
+    const serviceOrderFilteredList = serviceOrderList.data.filter((serviceOrder: IServiceOrderCloud.IServiceOrderCloud): boolean => !!(serviceOrder.status === 4 && !satisfactionSurveyList.map((satisfactionSurvey: ISatisfactionSurvey.ISatisfactionSurvey): string => satisfactionSurvey.service_order_number).includes(String(serviceOrder.sequentialId))));
 
     await Promise.allSettled(
       serviceOrderFilteredList.map(
         async (serviceOrder: IServiceOrderCloud.IServiceOrderCloud): Promise<any> => {
-          const userAndContactList = await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ serviceOrder.id }/userAndContacts`);
-          const userAndContactFilteredList = userAndContactList.data.filter((userAndContact: IUserAndContact.IUserAndContact): boolean => !!(userAndContact.function && userAndContact.function.match(/\bPESQUISA\b/g)));
+          const userAndContactList = await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ serviceOrder.accountId }/userAndContacts`);
+          const userAndContactFilteredList = userAndContactList.data.filter((userAndContact: IUserAndContact.IUserAndContact): boolean => !!(userAndContact.function && userAndContact.function.name.match(/\bPESQUISA\b/g)));
 
-          userAndContactFilteredList.every(
-            async (userAndContact: IUserAndContact.IUserAndContact): Promise<boolean> => {
-              const phone01 = userAndContact.phone01
-                ? parseInt(`55${ userAndContact.phone01.replace(/\D/g, '').slice(-11) }`, 10)
-                : undefined;
+          for (let index = 0; index < userAndContactFilteredList.length; index += 1) {
+            const phone01 = userAndContactFilteredList[index].phone01
+              ? `55${ userAndContactFilteredList[index].phone01.replace(/\D/g, '').slice(-11) }`
+              : undefined;
 
-              if (phone01) {
-                await prisma.neppo_satisfaction_surveys.create(
-                  {
-                    data: {
-                      service_order_number: serviceOrder.sequentialId,
-                      csid: serviceOrder.accountCode,
-                      phone: phone01,
-                      status: 'pending'
-                    }
+            if (phone01 && phone01.length === 13) {                
+              await prisma.neppo_satisfaction_surveys.create(
+                {
+                  data: {
+                    service_order_number: String(serviceOrder.sequentialId),
+                    csid: serviceOrder.accountCode,
+                    phone: phone01,
+                    status: 'pending'
                   }
-                );
+                }
+              );
 
-                return false;
-              }
-
-              return true;
+              break;
             }
-          );
+          }
         }
       )
     );
   } catch (error: unknown) {
-    console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.getLocalDate() } | Name: createCloudSatisfactionSurvey | Error: ${ error instanceof Error ? error.message : String(error) }`);
+    console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()) } | Name: createCloudSatisfactionSurvey | Error: ${ error instanceof Error ? error.message : String(error) }`);
   }
 };

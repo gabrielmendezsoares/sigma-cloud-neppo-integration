@@ -1,5 +1,5 @@
 export interface IUserAndContact {
-  function: string;
+  function: { name: string; };
   phone01: string;
   phone02: string;
 }
