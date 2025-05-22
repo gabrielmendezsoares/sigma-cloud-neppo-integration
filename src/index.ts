@@ -3,7 +3,7 @@ import morgan from 'morgan';
 import schedule from 'node-schedule';
 import startServer, { router, dateTimeFormatterUtil, getAccessLog, createServer } from '../expressium/src/index.js';
 import { appRoute } from './routes/index.js';
-import { saveCloudServiceOrderService, saveDesktopServiceOrderService, sendNotificationService } from './services/index.js';
+import { createCloudServiceOrderService, createDesktopServiceOrderService, sendNotificationService } from './services/index.js';
 
 const buildServer = async (): Promise<void> => {
   try {
@@ -55,6 +55,6 @@ const buildServer = async (): Promise<void> => {
 };
 
 buildServer();
-schedule.scheduleJob('*/15 * * * *', saveCloudServiceOrderService.saveCloudServiceOrder);
-schedule.scheduleJob('*/15 * * * *', saveDesktopServiceOrderService.saveDesktopServiceOrder);
+schedule.scheduleJob('*/15 * * * *', createCloudServiceOrderService.createCloudSatisfactionSurvey);
+schedule.scheduleJob('*/15 * * * *', createDesktopServiceOrderService.createDesktopSatisfactionSurvey);
 schedule.scheduleJob('*/2 9-17 * * 1-5', sendNotificationService.sendNotification);
