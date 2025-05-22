@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client/storage/client.js';
-import { HttpClientUtil } from '../../expressium/src/index.js';
+import { dateTimeFormatterUtil, HttpClientUtil } from '../../expressium/src/index.js';
 
 const prisma = new PrismaClient();
 
@@ -16,11 +16,11 @@ export const sendNotification = async (): Promise<void> => {
             await httpClientInstance.post(
               process.env.NEPPO_SEND_MESSAGE_URL as string,
               {
-                "phone": `55${ satisfactionSurvey.phone }`,
+                "phone": satisfactionSurvey.phone,
                 "message": "msg",
                 "group": "New Line Oficial",
                 "channel": "WHATSAPP",
-                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ satisfyingSearch.service_order_number }\"}]},\"medias\":{},\"openSession\":false}`
+                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ satisfactionSurvey.service_order_number }\"}]},\"medias\":{},\"openSession\":false}`
               },
               {
                 headers: {
@@ -48,6 +48,6 @@ export const sendNotification = async (): Promise<void> => {
       )
     );
   } catch (error: unknown) {
-
+    console.log(`Service | Timestamp: ${ dateTimeFormatterUtil.getLocalDate() } | Name: sendNotification | Error: ${ error instanceof Error ? error.message : String(error) }`);
   };
 };
