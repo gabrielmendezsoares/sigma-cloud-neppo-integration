@@ -49,13 +49,13 @@ const buildServer = async (): Promise<void> => {
     
     startServer(serverInstance as Express);
 
-    schedule.scheduleJob('*/5 * * * *', createCloudServiceOrderService.createCloudSatisfactionSurvey);
-    schedule.scheduleJob('*/5 * * * *', createDesktopServiceOrderService.createDesktopSatisfactionSurvey);
-    schedule.scheduleJob('*/2 9-17 * * 1-5', sendNotificationService.sendNotification);
-    
     await createCloudServiceOrderService.createCloudSatisfactionSurvey();
     await createDesktopServiceOrderService.createDesktopSatisfactionSurvey();
     await sendNotificationService.sendNotification();
+
+    schedule.scheduleJob('*/5 * * * *', createCloudServiceOrderService.createCloudSatisfactionSurvey);
+    schedule.scheduleJob('*/5 * * * *', createDesktopServiceOrderService.createDesktopSatisfactionSurvey);
+    schedule.scheduleJob('*/2 9-17 * * 1-5', sendNotificationService.sendNotification);
   } catch (error: unknown) {
     console.log(`Server | Timestamp: ${ dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()) } | Error: ${ error instanceof Error ? error.message : String(error) }`);
     process.exit(1);
