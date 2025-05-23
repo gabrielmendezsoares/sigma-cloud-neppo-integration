@@ -322,3 +322,17 @@ model neppo_satisfaction_surveys {
   @@index([status], map: "idx_status")
   @@index([updated_at], map: "idx_updated_at")
 }
+
+model ordens_servico_wpp {
+  id         Int                       @id @default(autoincrement())
+  data_json  Json
+  created_at DateTime                  @default(now())
+  updated_at DateTime                  @default(now())
+  status     ordens_servico_wpp_status @default(pendente)
+  id_os      Int?
+}
+
+enum ordens_servico_wpp_status {
+  pendente
+  aberta
+}
