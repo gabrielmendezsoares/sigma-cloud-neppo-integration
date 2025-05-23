@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client/storage/client.js';
 import { dateTimeFormatterUtil, HttpClientUtil, BearerStrategy } from '../../expressium/src/index.js';
-import { ISatisfactionSurvey, IServiceOrderCloud, IUserAndContact } from '../interfaces/index.js';
+import { ISatisfactionSurvey, IServiceOrderCloud, IUserAndContact } from './interfaces/index.js';
 
 const prisma = new PrismaClient();
 
