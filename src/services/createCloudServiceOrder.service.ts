@@ -4,7 +4,7 @@ import { ISatisfactionSurvey, IServiceOrderCloud, IUserAndContact } from './inte
 
 const prisma = new PrismaClient();
 
-export const createCloudSatisfactionSurvey = async () => { 
+export const createCloudSatisfactionSurvey = async (): Promise<void> => { 
   const localDateCurrentDate = dateTimeFormatterUtil.getLocalDate();
   const localDateCurrentDay = localDateCurrentDate.getDate();
   const localDateCurrentMonth = String(localDateCurrentDate.getMonth() + 1).padStart(2, '0');
