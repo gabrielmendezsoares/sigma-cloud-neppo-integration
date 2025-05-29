@@ -46,7 +46,6 @@ const buildServer = async (): Promise<void> => {
     const serverInstance = await createServer(app);
 
     appRoute.buildRoutes();
-    
     startServer(serverInstance as Express);
 
     await createCloudServiceOrderService.createCloudSatisfactionSurvey();

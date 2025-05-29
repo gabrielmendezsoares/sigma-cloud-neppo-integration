@@ -4,7 +4,7 @@ import { ISatisfactionSurvey, IServiceOrderDesktop } from './interfaces/index.js
 
 const prisma = new PrismaClient();
 
-export const createDesktopSatisfactionSurvey = async () => { 
+export const createDesktopSatisfactionSurvey = async (): Promise<void> => { 
   const httpClientInstance = new HttpClientUtil.HttpClient();
 
   httpClientInstance.setAuthenticationStrategy(new BearerStrategy.BearerStrategy(process.env.QUERY_GATEWAY_BEARER_TOKEN as string));
