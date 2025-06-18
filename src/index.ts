@@ -1,9 +1,10 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
+import momentTimezone from 'moment-timezone';
 import morgan from 'morgan';
 import schedule from 'node-schedule';
-import startServer, { router, dateTimeFormatterUtil, getAccessLog, createServer } from '../expressium/src/index.js';
+import startServer, { router, getAccessLog, createServer } from '../expressium/src/index.js';
 import { appRoute } from './routes/index.js';
-import { createCloudServiceOrderService, createDesktopServiceOrderService, sendNotificationService } from './services/index.js';
+import { createCloudNeppoSatisfactionSurveys, createDesktopNeppoSatisfactionSurveys, sendSatisfactionSurveys } from './services/index.js';
 
 const buildServer = async (): Promise<void> => {
   try {
@@ -28,7 +29,7 @@ const buildServer = async (): Promise<void> => {
           .status(404)
           .json(
             {
-              timestamp: dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()),
+              timestamp: momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss'),
               status: false,
               statusCode: 404,
               method: req.method,
@@ -46,17 +47,18 @@ const buildServer = async (): Promise<void> => {
     const serverInstance = await createServer(app);
 
     appRoute.buildRoutes();
+    
     startServer(serverInstance as Express);
 
-    await createCloudServiceOrderService.createCloudSatisfactionSurvey();
-    await createDesktopServiceOrderService.createDesktopSatisfactionSurvey();
-    await sendNotificationService.sendNotification();
+    await createCloudNeppoSatisfactionSurveys.createCloudNeppoSatisfactionSurveys();
+    await createDesktopNeppoSatisfactionSurveys.createDesktopNeppoSatisfactionSurveys();
+    await sendSatisfactionSurveys.sendSatisfactionSurveys();
 
-    schedule.scheduleJob('*/5 * * * *', createCloudServiceOrderService.createCloudSatisfactionSurvey);
-    schedule.scheduleJob('*/5 * * * *', createDesktopServiceOrderService.createDesktopSatisfactionSurvey);
-    schedule.scheduleJob('*/2 9-17 * * 1-5', sendNotificationService.sendNotification);
+    schedule.scheduleJob('0 */1 * * * *', createCloudNeppoSatisfactionSurveys.createCloudNeppoSatisfactionSurveys);
+    schedule.scheduleJob('0 */1 * * * *', createDesktopNeppoSatisfactionSurveys.createDesktopNeppoSatisfactionSurveys);
+    schedule.scheduleJob('0 */1 9-17 * * 1-5', sendSatisfactionSurveys.sendSatisfactionSurveys);
   } catch (error: unknown) {
-    console.log(`Server | Timestamp: ${ dateTimeFormatterUtil.formatAsDayMonthYearHoursMinutesSeconds(dateTimeFormatterUtil.getLocalDate()) } | Error: ${ error instanceof Error ? error.message : String(error) }`);
+    console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/index.ts | Location: buildServer | Error: ${ error instanceof Error ? error.message : String(error) }`);
     process.exit(1);
   }
 };

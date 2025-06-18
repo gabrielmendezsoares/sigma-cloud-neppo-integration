@@ -1,7 +1,7 @@
-export interface ISatisfactionSurvey {
+export interface INeppoSatisfactionSurvey {
   id: number;
-  service_order_number: string;
-  csid: string;
+  sequential_id: string;
+  account_code: string;
   phone: string;
   status: string;
   created_at: Date;
