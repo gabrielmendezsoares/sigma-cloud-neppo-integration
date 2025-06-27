@@ -1,1 +1,1 @@
-export interface IActivity { defectSolutionId: number; }
+export interface IActivity { defectSolution: string; }

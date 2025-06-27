@@ -10,9 +10,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
 
   httpClientInstance.setAuthenticationStrategy(new BearerStrategy.BearerStrategy(process.env.QUERY_GATEWAY_BEARER_TOKEN as string));
 
-  try {
-    const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
-    
+  try {    
     const responseA = (
       await httpClientInstance.post<unknown>(
         'http://localhost:3042/api/v1/get/query-data-map', 
@@ -20,14 +18,16 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
       )
     ).data.data?.sigma_cloud_neppo_integration_get_service_order_list;
 
-    const serviceOrderList = responseA?.data;
+    const desktopServiceOrderList = responseA?.data;
     
-    if (responseA?.status && serviceOrderList) {
-      const serviceOrderFilteredList = serviceOrderList.filter((serviceOrder: IDesktopServiceOrder.IDesktopServiceOrder): boolean => !neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id).includes(String(serviceOrder.sequential_id)));  
+    if (responseA?.status && desktopServiceOrderList) {
+      const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
+      const sequentialIdList = neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id); 
+      const desktopServiceOrderFilteredList = desktopServiceOrderList.filter((desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): boolean => !sequentialIdList.includes(String(desktopServiceOrder.sequential_id)));  
     
       await Promise.allSettled(
-        serviceOrderFilteredList.map(
-          async (serviceOrder: IDesktopServiceOrder.IDesktopServiceOrder): Promise<any> => {
+        desktopServiceOrderFilteredList.map(
+          async (desktopServiceOrderFiltered: IDesktopServiceOrder.IDesktopServiceOrder): Promise<any> => {
             const responseB = (
               await httpClientInstance.post<unknown>(
                 'http://localhost:3042/api/v1/get/query-data-map', 
@@ -37,7 +37,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                     variable_map: {
                       accountCode: {
                         dataType: 'VARCHAR(255)',
-                        value: serviceOrder.account_code
+                        value: desktopServiceOrderFiltered.account_code
                       }
                     }
                   }
@@ -57,7 +57,8 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                   await prisma.neppo_satisfaction_surveys.create(
                     {
                       data: {
-                        sequential_id: String(serviceOrder.sequential_id),
+                        sequential_id: String(desktopServiceOrderFiltered.sequential_id),
+                        defect: desktopServiceOrderFiltered.defect,
                         phone: phone01,
                         status: 'pending'
                       }

@@ -22,7 +22,7 @@ export const sendNeppoSatisfactionSurveys = async (): Promise<void> => {
                 "message": "msg",
                 "group": "New Line Oficial",
                 "channel": "WHATSAPP",
-                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.sequential_id }\"}]},\"medias\":{},\"openSession\":false}`
+                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.sequential_id } - ${ neppoSatisfactionSurvey.defect }\"}]},\"medias\":{},\"openSession\":false}`
               },
               {
                 headers: {
