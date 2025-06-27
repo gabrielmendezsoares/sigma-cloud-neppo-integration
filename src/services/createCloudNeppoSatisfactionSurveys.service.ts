@@ -8,10 +8,10 @@ const prisma = new PrismaClient();
 export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => { 
   const httpClientInstance = new HttpClientUtil.HttpClient();
   const utcCurrent = momentTimezone().utc();
-  const utcLastWeek = utcCurrent.clone().subtract(7, 'days');
   const utcCurrentDay = utcCurrent.format('DD');
   const utcCurrentMonth = utcCurrent.format('MM');
   const utcCurrentYear = utcCurrent.format('YYYY');
+  const utcLastWeek = utcCurrent.clone().subtract(7, 'days');
   const utcLastDay = utcLastWeek.format('DD');
   const utcLastMonth = utcLastWeek.format('MM');
   const utcLastYear = utcLastWeek.format('YYYY');
@@ -39,7 +39,6 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
                 {
                   data: {
                     sequential_id: String(serviceOrder.sequentialId),
-                    account_code: serviceOrder.accountCode,
                     phone: phone01,
                     status: 'pending'
                   }
