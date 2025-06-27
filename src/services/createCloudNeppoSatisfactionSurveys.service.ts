@@ -1,9 +1,12 @@
 import momentTimezone from 'moment-timezone';
 import { PrismaClient } from '@prisma/client/storage/client.js';
 import { HttpClientUtil, BearerStrategy } from '../../expressium/src/index.js';
-import { ICloudServiceOrder, INeppoSatisfactionSurvey, IUserAndContact } from './interfaces/index.js';
+import { IActivity, ICloudServiceOrder, ICloudServiceOrderFromId, INeppoSatisfactionSurvey, IUserAndContact } from './interfaces/index.js';
 
 const prisma = new PrismaClient();
+
+const DEFECT_IGNORE_LIST = ['CANCELAMENTO', 'ARROMBAMENTO'];
+const DEFECT_SOLUTION_ID = 15326;
 
 export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => { 
   const httpClientInstance = new HttpClientUtil.HttpClient();
@@ -19,14 +22,27 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
   httpClientInstance.setAuthenticationStrategy(new BearerStrategy.BearerStrategy(process.env.SIGMA_CLOUD_BEARER_TOKEN as string));
 
   try {
+    const cloudServiceOrderList = await httpClientInstance.get<ICloudServiceOrder.ICloudServiceOrder[]>(`https://api.segware.com.br/v1/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING`);
     const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
-    const serviceOrderList = await httpClientInstance.get<ICloudServiceOrder.ICloudServiceOrder[]>(`https://api.segware.com.br/v1/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING`);
-    const serviceOrderFilteredList = serviceOrderList.data.filter((serviceOrder: ICloudServiceOrder.ICloudServiceOrder): boolean => !!(serviceOrder.status === 4 && !neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id).includes(String(serviceOrder.sequentialId))));
+    const sequentialIdList = neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id);
+
+    const cloudServiceOrderFilteredList = cloudServiceOrderList.data.filter(
+      async (cloudServiceOrder: ICloudServiceOrder.ICloudServiceOrder): Promise<boolean> => {
+       const cloudServiceOrderFromId = await httpClientInstance.get<ICloudServiceOrderFromId.ICloudServiceOrderFromId>(`https://api.segware.com.br/v1/serviceOrders/${ cloudServiceOrder.sequentialId }`);
+
+        return !!(
+          !sequentialIdList.includes(String(cloudServiceOrder.sequentialId)) 
+          && cloudServiceOrder.status === 4 
+          && !DEFECT_IGNORE_LIST.includes(cloudServiceOrder.defect) 
+          && cloudServiceOrderFromId.data.activities.find((activity: IActivity.IActivity): boolean => activity.defectSolutionId === DEFECT_SOLUTION_ID)
+        );
+      }
+    );
     
     await Promise.allSettled(
-      serviceOrderFilteredList.map(
-        async (serviceOrder: ICloudServiceOrder.ICloudServiceOrder): Promise<any> => {
-          const userAndContactList = await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ serviceOrder.accountId }/userAndContacts`);
+      cloudServiceOrderFilteredList.map(
+        async (cloudServiceOrderFiltered: ICloudServiceOrder.ICloudServiceOrder): Promise<any> => {
+          const userAndContactList = await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ cloudServiceOrderFiltered.accountId }/userAndContacts`);
           const userAndContactFilteredList = userAndContactList.data.filter((userAndContact: IUserAndContact.IUserAndContact): boolean => !!(userAndContact.function?.name.match(/\bPESQUISA\b/g)));
 
           for (let index = 0; index < userAndContactFilteredList.length; index += 1) {
@@ -38,7 +54,8 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
               await prisma.neppo_satisfaction_surveys.create(
                 {
                   data: {
-                    sequential_id: String(serviceOrder.sequentialId),
+                    sequential_id: String(cloudServiceOrderFiltered.sequentialId),
+                    defect: cloudServiceOrderFiltered.defect,
                     phone: phone01,
                     status: 'pending'
                   }
