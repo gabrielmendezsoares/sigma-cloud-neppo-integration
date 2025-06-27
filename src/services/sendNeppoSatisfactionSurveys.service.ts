@@ -5,7 +5,7 @@ import { INeppoSatisfactionSurvey } from './interfaces/index.js';
 
 const prisma = new PrismaClient();
 
-export const sendSatisfactionSurveys = async (): Promise<void> => {
+export const sendNeppoSatisfactionSurveys = async (): Promise<void> => {
   try {
     const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany({ where: { status: 'pending' } });
 
@@ -22,7 +22,7 @@ export const sendSatisfactionSurveys = async (): Promise<void> => {
                 "message": "msg",
                 "group": "New Line Oficial",
                 "channel": "WHATSAPP",
-                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.service_order_number }\"}]},\"medias\":{},\"openSession\":false}`
+                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.sequential_id }\"}]},\"medias\":{},\"openSession\":false}`
               },
               {
                 headers: {
@@ -39,7 +39,7 @@ export const sendSatisfactionSurveys = async (): Promise<void> => {
               }
             );
           } catch (error: unknown) {
-            console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/services/sendSatisfactionSurveys.service.ts | Location: sendSatisfactionSurveys | Error: ${ neppoSatisfactionSurvey.phone } - ${ error instanceof Error ? error.message : String(error) }`);
+            console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/services/sendNeppoSatisfactionSurveys.service.ts | Location: sendNeppoSatisfactionSurveys | Error: ${ neppoSatisfactionSurvey.phone } - ${ error instanceof Error ? error.message : String(error) }`);
 
             await prisma.neppo_satisfaction_surveys.update(
               { 
@@ -52,6 +52,6 @@ export const sendSatisfactionSurveys = async (): Promise<void> => {
       )
     );
   } catch (error: unknown) {
-    console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/services/sendSatisfactionSurveys.service.ts | Location: sendSatisfactionSurveys | Error: ${ error instanceof Error ? error.message : String(error) }`);
+    console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/services/sendNeppoSatisfactionSurveys.service.ts | Location: sendNeppoSatisfactionSurveys | Error: ${ error instanceof Error ? error.message : String(error) }`);
   };
 };

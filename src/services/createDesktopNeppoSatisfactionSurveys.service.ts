@@ -35,7 +35,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                   filterMap: { name: 'sigma_cloud_neppo_integration_get_user_and_contact_list' },
                   sigma_cloud_neppo_integration_get_user_and_contact_list: {
                     variable_map: {
-                      account_code: {
+                      accountCode: {
                         dataType: 'VARCHAR(255)',
                         value: serviceOrder.account_code
                       }
@@ -53,12 +53,11 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                   ? `55${ userAndContactList[index].phone01.replace(/\D/g, '').slice(-11) }`
                   : undefined;
       
-                if (phone01 && phone01.length === 13) {
+                if (phone01?.length === 13) {
                   await prisma.neppo_satisfaction_surveys.create(
                     {
                       data: {
                         sequential_id: String(serviceOrder.sequential_id),
-                        account_code: serviceOrder.account_code,
                         phone: phone01,
                         status: 'pending'
                       }
