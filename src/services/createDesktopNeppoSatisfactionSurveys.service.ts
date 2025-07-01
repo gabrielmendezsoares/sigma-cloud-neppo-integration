@@ -22,12 +22,14 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
     
     if (responseA?.status && desktopServiceOrderList) {
       const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
-      const sequentialIdList = neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id); 
-      const desktopServiceOrderFilteredList = desktopServiceOrderList.filter((desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): boolean => !sequentialIdList.includes(String(desktopServiceOrder.sequential_id)));  
-    
+
       await Promise.allSettled(
-        desktopServiceOrderFilteredList.map(
-          async (desktopServiceOrderFiltered: IDesktopServiceOrder.IDesktopServiceOrder): Promise<any> => {
+        desktopServiceOrderList.map(
+          async (desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): Promise<any> => {
+            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => (neppoSatisfactionSurvey.sequential_id === String(desktopServiceOrder.sequential_id)) && (neppoSatisfactionSurvey.type === 'desktop'))) {
+              return;
+            }
+
             const responseB = (
               await httpClientInstance.post<unknown>(
                 'http://localhost:3042/api/v1/get/query-data-map', 
@@ -37,7 +39,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                     variable_map: {
                       accountCode: {
                         dataType: 'VARCHAR(255)',
-                        value: desktopServiceOrderFiltered.account_code
+                        value: desktopServiceOrder.account_code
                       }
                     }
                   }
@@ -57,10 +59,12 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
                   await prisma.neppo_satisfaction_surveys.create(
                     {
                       data: {
-                        sequential_id: String(desktopServiceOrderFiltered.sequential_id),
-                        defect: desktopServiceOrderFiltered.defect,
+                        sequential_id: String(desktopServiceOrder.sequential_id),
+                        defect: desktopServiceOrder.defect,
                         phone: phone01,
-                        status: 'pending'
+                        status: 'pending',
+                        type: 'desktop',
+                        started_at: momentTimezone(desktopServiceOrder.begin_date).utc().toDate()
                       }
                     }
                   );

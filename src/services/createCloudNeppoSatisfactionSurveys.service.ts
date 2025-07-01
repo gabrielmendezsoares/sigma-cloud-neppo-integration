@@ -21,52 +21,68 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
   httpClientInstance.setAuthenticationStrategy(new BearerStrategy.BearerStrategy(process.env.SIGMA_CLOUD_BEARER_TOKEN as string));
 
   try {
-    const cloudServiceOrderList = await httpClientInstance.get<ICloudServiceOrder.ICloudServiceOrder[]>(`https://api.segware.com.br/v1/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING`);
     const neppoSatisfactionSurveyList = await prisma.neppo_satisfaction_surveys.findMany();
-    const sequentialIdList = neppoSatisfactionSurveyList.map((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): string => neppoSatisfactionSurvey.sequential_id);
+
+    let page = 0;
+    let last = false;
+
+    do {
+      const cloudServiceOrderList = (await httpClientInstance.get<{ content: ICloudServiceOrder.ICloudServiceOrder[] }>(`https://api.segware.com.br/v2/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING&page=${ page }&size=1000`)).data;
+   
+      await Promise.allSettled(
+        cloudServiceOrderList.content.map(
+          async (cloudServiceOrder: ICloudServiceOrder.ICloudServiceOrder): Promise<void> => {
+            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => (neppoSatisfactionSurvey.sequential_id === String(cloudServiceOrder.sequentialId)) && (neppoSatisfactionSurvey.type === 'cloud'))) {
+              return;
+            }
+            
+            if (cloudServiceOrder.status !== 4) {
+              return;
+            }
     
-    const cloudServiceOrderFilteredList = cloudServiceOrderList.data.filter(
-      async (cloudServiceOrder: ICloudServiceOrder.ICloudServiceOrder): Promise<boolean> => {
-        const cloudServiceOrderFromId = await httpClientInstance.get<ICloudServiceOrderFromId.ICloudServiceOrderFromId>(`https://api.segware.com.br/v1/serviceOrders/${ cloudServiceOrder.sequentialId }`);
+            if (DEFECT_IGNORE_LIST.includes(cloudServiceOrder.defect)) {
+              return;
+            }
 
-        return !!(
-          !sequentialIdList.includes(String(cloudServiceOrder.sequentialId)) 
-          && cloudServiceOrder.status === 4 
-          && !DEFECT_IGNORE_LIST.includes(cloudServiceOrder.defect) 
-          && cloudServiceOrderFromId.data.activities.find((activity: IActivity.IActivity): boolean => activity.defectSolution.includes('PRESENCIAL'))
-        );
-      }
-    );
+            const cloudServiceOrderFromId = (await httpClientInstance.get<ICloudServiceOrderFromId.ICloudServiceOrderFromId>(`https://api.segware.com.br/v1/serviceOrders/${ cloudServiceOrder.id }`)).data;
     
-    await Promise.allSettled(
-      cloudServiceOrderFilteredList.map(
-        async (cloudServiceOrderFiltered: ICloudServiceOrder.ICloudServiceOrder): Promise<void> => {
-          const userAndContactList = await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ cloudServiceOrderFiltered.accountId }/userAndContacts`);
-          const userAndContactFilteredList = userAndContactList.data.filter((userAndContact: IUserAndContact.IUserAndContact): boolean => !!(userAndContact.function?.name.match(/\bPESQUISA\b/g)));
+            if (!cloudServiceOrderFromId.activities.find((activity: IActivity.IActivity): boolean => activity.defectSolution.includes('PRESENCIAL'))) {
+              return;
+            }
 
-          for (let index = 0; index < userAndContactFilteredList.length; index += 1) {
-            const phone01 = userAndContactFilteredList[index].phone01
-              ? `55${ userAndContactFilteredList[index].phone01.replace(/\D/g, '').slice(-11) }`
-              : undefined;
-
-            if (phone01?.length === 13) {                
-              await prisma.neppo_satisfaction_surveys.create(
-                {
-                  data: {
-                    sequential_id: String(cloudServiceOrderFiltered.sequentialId),
-                    defect: cloudServiceOrderFiltered.defect,
-                    phone: phone01,
-                    status: 'pending'
+            const userAndContactList = (await httpClientInstance.get<IUserAndContact.IUserAndContact[]>(`https://api.segware.com.br/v1/accounts/${ cloudServiceOrder.accountId }/userAndContacts`)).data;
+            const userAndContactFilteredList = userAndContactList.filter((userAndContact: IUserAndContact.IUserAndContact): boolean => !!(userAndContact.function?.name.match(/\bPESQUISA\b/g)));
+  
+            for (let index = 0; index < userAndContactFilteredList.length; index += 1) {
+              const phone01 = userAndContactFilteredList[index].phone01
+                ? `55${ userAndContactFilteredList[index].phone01.replace(/\D/g, '').slice(-11) }`
+                : undefined;
+  
+              if (phone01?.length === 13) {                
+                await prisma.neppo_satisfaction_surveys.create(
+                  {
+                    data: {
+                      sequential_id: String(cloudServiceOrder.sequentialId),
+                      defect: cloudServiceOrder.defect,
+                      phone: phone01,
+                      status: 'pending',
+                      type: 'cloud',
+                      started_at: momentTimezone(cloudServiceOrder.beginDate).utc().toDate(),
+                    }
                   }
-                }
-              );
-
-              break;
+                );
+  
+                break;
+              }
             }
           }
-        }
-      )
-    );
+        )
+      );
+
+      if (cloudServiceOrderList.last) {
+        last = true;
+      }
+    } while (!last);
   } catch (error: unknown) {
     console.log(`Error | Timestamp: ${ momentTimezone().utc().format('DD-MM-YYYY HH:mm:ss') } | Path: src/services/createCloudNeppoSatisfactionSurveys.service.ts | Location: createCloudNeppoSatisfactionSurveys | Error: ${ error instanceof Error ? error.message : String(error) }`);
   }
