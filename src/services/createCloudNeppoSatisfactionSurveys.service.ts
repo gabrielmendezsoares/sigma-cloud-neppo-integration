@@ -3,9 +3,9 @@ import { PrismaClient } from '@prisma/client/storage/client.js';
 import { HttpClientUtil, BearerStrategy } from '../../expressium/src/index.js';
 import { IActivity, ICloudServiceOrder, ICloudServiceOrderFromId, INeppoSatisfactionSurvey, IUserAndContact } from './interfaces/index.js';
 
-const prisma = new PrismaClient();
-
 const DEFECT_IGNORE_LIST = ['ARROMBAMENTO', 'CANCELAMENTO'];
+
+const prisma = new PrismaClient();
 
 export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => { 
   const httpClientInstance = new HttpClientUtil.HttpClient();
@@ -32,7 +32,7 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
       await Promise.allSettled(
         cloudServiceOrderList.content.map(
           async (cloudServiceOrder: ICloudServiceOrder.ICloudServiceOrder): Promise<void> => {
-            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => (neppoSatisfactionSurvey.sequential_id === String(cloudServiceOrder.sequentialId)) && (neppoSatisfactionSurvey.type === 'cloud'))) {
+            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => neppoSatisfactionSurvey.sequential_id === String(cloudServiceOrder.sequentialId) && neppoSatisfactionSurvey.type === 'cloud')) {
               return;
             }
             
@@ -46,7 +46,7 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
 
             const cloudServiceOrderFromId = (await httpClientInstance.get<ICloudServiceOrderFromId.ICloudServiceOrderFromId>(`https://api.segware.com.br/v1/serviceOrders/${ cloudServiceOrder.id }`)).data;
     
-            if (!cloudServiceOrderFromId.activities.find((activity: IActivity.IActivity): boolean => activity.defectSolution.includes('PRESENCIAL'))) {
+            if (!cloudServiceOrderFromId?.activities.find((activity: IActivity.IActivity): boolean => activity.defectSolution.includes('PRESENCIAL'))) {
               return;
             }
 

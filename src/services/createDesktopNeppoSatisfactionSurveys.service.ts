@@ -26,7 +26,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
       await Promise.allSettled(
         desktopServiceOrderList.map(
           async (desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): Promise<any> => {
-            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => (neppoSatisfactionSurvey.sequential_id === String(desktopServiceOrder.sequential_id)) && (neppoSatisfactionSurvey.type === 'desktop'))) {
+            if (neppoSatisfactionSurveyList.find((neppoSatisfactionSurvey: INeppoSatisfactionSurvey.INeppoSatisfactionSurvey): boolean => neppoSatisfactionSurvey.sequential_id === String(desktopServiceOrder.sequential_id) && neppoSatisfactionSurvey.type === 'desktop')) {
               return;
             }
 
