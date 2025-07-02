@@ -1,4 +1,6 @@
 export interface IDesktopServiceOrder {
   account_code: string;
-  sequential_id: string;
+  begin_date: Date;
+  defect: string;
+  sequential_id: number;
 }

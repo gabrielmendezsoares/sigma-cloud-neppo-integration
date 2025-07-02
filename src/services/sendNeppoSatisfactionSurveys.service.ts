@@ -22,14 +22,9 @@ export const sendNeppoSatisfactionSurveys = async (): Promise<void> => {
                 "message": "msg",
                 "group": "New Line Oficial",
                 "channel": "WHATSAPP",
-                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.sequential_id }\"}]},\"medias\":{},\"openSession\":false}`
+                "additionalInfo": `{\"namespace\":\"7a4b532c_88f3_42dd_826e_fdaa86b8ec63\",\"elementName\":\"pesquisa_visita_tecnica\",\"parameters\":{\"BODY\":[{\"type\":\"text\",\"text\":\"${ neppoSatisfactionSurvey.sequential_id } – ${ neppoSatisfactionSurvey.defect.length > 0 ? neppoSatisfactionSurvey.defect : 'PADRÃO' }, aberta em ${ momentTimezone(neppoSatisfactionSurvey.started_at).format('DD/MM') } às ${ momentTimezone(neppoSatisfactionSurvey.started_at).format('HH') }h${ momentTimezone(neppoSatisfactionSurvey.started_at).format('mm') }\"}]},\"medias\":{},\"openSession\":false}`
               },
-              {
-                headers: {
-                  Authorization: process.env.NEPPO_TOKEN as string,
-                  Cookie: process.env.NEPPO_COOKIE as string
-                }
-              }
+              { headers: { Authorization: process.env.NEPPO_TOKEN as string } }
             );
     
             await prisma.neppo_satisfaction_surveys.update(
