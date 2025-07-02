@@ -27,7 +27,7 @@ export const createCloudNeppoSatisfactionSurveys = async (): Promise<void> => {
     let last = false;
 
     do {
-      const cloudServiceOrderList = (await httpClientInstance.get<{ content: ICloudServiceOrder.ICloudServiceOrder[] }>(`https://api.segware.com.br/v2/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING&page=${ page }&size=1000`)).data;
+      const cloudServiceOrderList = (await httpClientInstance.get<{ content: ICloudServiceOrder.ICloudServiceOrder[]; last: boolean; }>(`https://api.segware.com.br/v2/serviceOrders?fromDate=${ utcLastDay }%2F${ utcLastMonth }%2F${ utcLastYear }&toShowDate=${ utcCurrentDay }%2F${ utcCurrentMonth }%2F${ utcCurrentYear }&dateType=CLOSING&page=${ page }&size=1000`)).data;
    
       await Promise.allSettled(
         cloudServiceOrderList.content.map(

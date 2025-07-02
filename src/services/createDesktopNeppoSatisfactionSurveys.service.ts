@@ -12,7 +12,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
 
   try {    
     const responseA = (
-      await httpClientInstance.post<unknown>(
+      await httpClientInstance.post<any>(
         'http://localhost:3042/api/v1/get/query-data-map', 
         { filterMap: { name: 'sigma_cloud_neppo_integration_get_service_order_list' } }
       )
@@ -31,7 +31,7 @@ export const createDesktopNeppoSatisfactionSurveys = async (): Promise<void> => 
             }
 
             const responseB = (
-              await httpClientInstance.post<unknown>(
+              await httpClientInstance.post<any>(
                 'http://localhost:3042/api/v1/get/query-data-map', 
                 { 
                   filterMap: { name: 'sigma_cloud_neppo_integration_get_user_and_contact_list' },
