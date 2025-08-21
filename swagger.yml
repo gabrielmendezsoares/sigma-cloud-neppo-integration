@@ -1,26 +1,23 @@
 openapi: 3.0.3
 info:
-  title: 👁️ Sigma Cloud Neppo Integration
+  title: 📞 Sigma Cloud Neppo Integration
   version: 2.0.1
   description: |
     ## 📋 Overview
 
-    This service acts as a real-time monitoring and self-healing layer for ChatPro and its deployed instances. It periodically checks instance availability and operational status by calling official ChatPro APIs, collecting balance data and health status for each configured instance.
+    Sigma Cloud Neppo Integration is a multi-stage data pipeline that collects, processes, and dispatches satisfaction surveys via WhatsApp using the Neppo platform. It integrates with both Sigma Cloud (via REST API) and Query Gateway (for desktop service orders) to pull recent service order data and send user-specific satisfaction messages automatically.
 
-    If any instance is found to be offline or unresponsive, the service detects the issue and reports it clearly, allowing downstream automation or manual intervention. It also captures key runtime metrics (CPU, memory, port, and logging state), ensuring that both system health and third-party instance integrity are continuously visible.
+    The system supports phone normalization, filters invalid or irrelevant records, and tracks message delivery status for further auditing or retries. It ensures that both cloud-based and desktop-based service orders are processed uniformly, enhancing service quality feedback collection.
 
-    Built with extensibility and automation in mind, this system ensures ChatPro remains available, traceable, and resilient — without requiring constant manual attention.
-    
     ### 🎯 Objectives
 
-    - Monitor the health and responsiveness of all connected ChatPro instances
-    - Check ChatPro user balance and instance connection status via official APIs
-    - Detect and report unresponsive or offline instances in real time
-    - Collect and expose runtime system metrics (CPU usage, memory, port, log level)
-    - Present all status information in a structured, easy-to-parse format
-    - Surface clear, actionable indicators for operational teams or automated tooling
-    - Enable integration with dashboards, alerts, or recovery workflows
-    - Minimize downtime and manual checks through proactive observability
+    - Automate the extraction of recent service orders from Sigma Cloud and desktop environments
+    - Normalize and validate client phone numbers for messaging compatibility
+    - Store satisfaction survey records for both cloud and desktop sources in a centralized database
+    - Dispatch WhatsApp messages via Neppo using dynamic message templates
+    - Track message delivery status and handle errors with retry support
+    - Reduce manual oversight by providing a resilient and unified survey delivery pipeline
+    - Integrate with existing systems using Query Gateway for secure, structured data access
 servers:
   - url: http://localhost:3928
     description: Development server
