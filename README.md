@@ -1,20 +1,20 @@
-# 🔍 Query Gateway
+# 📞 Sigma Cloud Neppo Integration
 
 ## 📋 Overview
 
-The Query Gateway is a dynamic SQL execution engine that securely connects to multiple database types (MySQL, SQL Server, Oracle) and executes pre-configured queries stored in the system. It supports runtime decryption of database credentials, dynamic query construction with variable and replacement maps, and unified result aggregation across sources.
+Sigma Cloud Neppo Integration is a multi-stage data pipeline that collects, processes, and dispatches satisfaction surveys via WhatsApp using the Neppo platform. It integrates with both Sigma Cloud (via REST API) and Query Gateway (for desktop service orders) to pull recent service order data and send user-specific satisfaction messages automatically.
 
-This service enables a centralized way to securely and flexibly query external databases without hardcoding SQL, database credentials, or connection logic in client applications.
+The system supports phone normalization, filters invalid or irrelevant records, and tracks message delivery status for further auditing or retries. It ensures that both cloud-based and desktop-based service orders are processed uniformly, enhancing service quality feedback collection.
 
 ### 🎯 Objectives
 
-- Dynamically execute stored SQL queries across multiple databases
-- Support MySQL, SQL Server, and Oracle with dialect-specific handling
-- Securely decrypt and use database credentials at runtime (AES-256-CBC)
-- Allow dynamic parameterization via variable_map and replacement_map
-- Gracefully handle failures per query while maintaining partial success responses
-- Return all query results in a unified, structured response object
-- Enable easy extension and onboarding of new data sources through configuration
+- Automate the extraction of recent service orders from Sigma Cloud and desktop environments
+- Normalize and validate client phone numbers for messaging compatibility
+- Store satisfaction survey records for both cloud and desktop sources in a centralized database
+- Dispatch WhatsApp messages via Neppo using dynamic message templates
+- Track message delivery status and handle errors with retry support
+- Reduce manual oversight by providing a resilient and unified survey delivery pipeline
+- Integrate with existing systems using Query Gateway for secure, structured data access
 
 --- 
 
