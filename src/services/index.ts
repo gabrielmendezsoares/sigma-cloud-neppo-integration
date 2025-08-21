@@ -1,4 +1,5 @@
-export * as appService from './app.service.js';
-export * as createCloudNeppoSatisfactionSurveysService from './createCloudNeppoSatisfactionSurveys.service.js';
-export * as createDesktopNeppoSatisfactionSurveysService from './createDesktopNeppoSatisfactionSurveys.service.js';
-export * as sendNeppoSatisfactionSurveysService from './sendNeppoSatisfactionSurveys.service.js';
+export * as createCloudSatisfactionSurveysService from './createCloudSatisfactionSurveys.service.js';
+export * as createDesktopSatisfactionSurveysService from './createDesktopSatisfactionSurveys.service.js';
+export * as getHealthService from './getHealth.service.js';
+export * as normalizePhoneService from './normalizePhone.service.js';
+export * as sendSatisfactionSurveysService from './sendSatisfactionSurveys.service.js';
