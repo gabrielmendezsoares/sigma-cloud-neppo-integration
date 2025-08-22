@@ -1,5 +1,5 @@
 export const normalizePhone = (phone: string): string | null => {
-  let cleanPhone = phone.replace(/\D/g, '');
+  let cleanPhone = phone;
 
   if (cleanPhone.startsWith('55')) {
     cleanPhone = cleanPhone.slice(2);
