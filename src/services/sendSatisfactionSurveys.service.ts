@@ -28,7 +28,7 @@ export const sendSatisfactionSurveys = async (): Promise<void> => {
               { headers: { Authorization: process.env.NEPPO_TOKEN as string } }
             );
     
-            await prisma.neppo_satisfaction_surveys.update(
+            await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.update(
               { 
                 where: { id: sigmaCloudNeppoIntegrationSatisfactionSurvey.id },
                 data: { status: 'sent' }
@@ -37,7 +37,7 @@ export const sendSatisfactionSurveys = async (): Promise<void> => {
           } catch (error: unknown) {
             loggerUtil.error(error instanceof Error ? error.message : String(error));
 
-            await prisma.neppo_satisfaction_surveys.update(
+            await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.update(
               { 
                 where: { id: sigmaCloudNeppoIntegrationSatisfactionSurvey.id },
                 data: { status: 'failed' }
