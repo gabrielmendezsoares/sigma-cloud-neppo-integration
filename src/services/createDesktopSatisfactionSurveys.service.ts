@@ -34,62 +34,60 @@ export const createDesktopSatisfactionSurveys = async (): Promise<void> => {
       { filterMap: { name: 'sigma_cloud_neppo_integration_get_service_order_list' } }
     );
 
-    if (responseA.status === 200) {
-      const sigmaCloudNeppoIntegrationSatisfactionSurveyList = await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.findMany();
+    const sigmaCloudNeppoIntegrationSatisfactionSurveyList = await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.findMany();
 
-      await Promise.allSettled(
-        responseA.data.data.sigma_cloud_neppo_integration_get_service_order_list.map(
-          async (desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): Promise<void> => {
-            if (sigmaCloudNeppoIntegrationSatisfactionSurveyList.find((sigmaCloudNeppoIntegrationSatisfactionSurvey: sigma_cloud_neppo_integration_satisfaction_surveys): boolean => sigmaCloudNeppoIntegrationSatisfactionSurvey.sequential_id === desktopServiceOrder.sequential_id && sigmaCloudNeppoIntegrationSatisfactionSurvey.type === TYPE)) {
-              return;
-            }
+    await Promise.allSettled(
+      responseA.data.data.sigma_cloud_neppo_integration_get_service_order_list.map(
+        async (desktopServiceOrder: IDesktopServiceOrder.IDesktopServiceOrder): Promise<void> => {
+          if (sigmaCloudNeppoIntegrationSatisfactionSurveyList.find((sigmaCloudNeppoIntegrationSatisfactionSurvey: sigma_cloud_neppo_integration_satisfaction_surveys): boolean => sigmaCloudNeppoIntegrationSatisfactionSurvey.sequential_id === desktopServiceOrder.sequential_id && sigmaCloudNeppoIntegrationSatisfactionSurvey.type === TYPE)) {
+            loggerUtil.info(`Desktop — Satisfaction survey already exists for service order ${ desktopServiceOrder.sequential_id }. Skipping.`);
+            
+            return;
+          }
 
-            const responseB = await httpClientInstance.post<any>(
-              QUERY_GATEWAY_API_V1_CREATE_QUERY_DATA_URL, 
-              { 
-                filterMap: { name: 'sigma_cloud_neppo_integration_get_user_and_contact_list' },
-                sigma_cloud_neppo_integration_get_user_and_contact_list: {
-                  variable_map: {
-                    accountCode: {
-                      dataType: 'VARCHAR(255)',
-                      value: desktopServiceOrder.account_code
-                    }
+          const responseB = await httpClientInstance.post<any>(
+            QUERY_GATEWAY_API_V1_CREATE_QUERY_DATA_URL, 
+            { 
+              filterMap: { name: 'sigma_cloud_neppo_integration_get_user_and_contact_list' },
+              sigma_cloud_neppo_integration_get_user_and_contact_list: {
+                variable_map: {
+                  accountCode: {
+                    dataType: 'VARCHAR(255)',
+                    value: desktopServiceOrder.account_code
                   }
                 }
               }
-            );
+            }
+          );
 
-            if (responseB.status === 200) {
-              const userAndContactList = responseB.data.data.sigma_cloud_neppo_integration_get_user_and_contact_list;
+          const userAndContactList = responseB.data.data.sigma_cloud_neppo_integration_get_user_and_contact_list;
 
-              for (let index = 0; index < userAndContactList.length; index += 1) {
-                const registeredPhone = userAndContactList[index]?.phone01;
+          for (let userAndContact of userAndContactList) {
+            const registeredPhone = userAndContact.phone01;
 
-                if (registeredPhone) {
-                  const cleanPhone = registeredPhone.replace(PHONE_REGEX, '');
-      
-                  await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.create(
-                    {
-                      data: {
-                        sequential_id: desktopServiceOrder.sequential_id,
-                        defect: desktopServiceOrder.defect,
-                        registered_phone: registeredPhone,
-                        normalized_phone: cleanPhone && normalizePhoneService.normalizePhone(cleanPhone),
-                        status: 'pending',
-                        type: TYPE,
-                        started_at: momentTimezone(desktopServiceOrder.begin_date).utc().toDate()
-                      }
-                    }
-                  );
-                  
-                  break;
+            if (registeredPhone) {
+              const cleanPhone = registeredPhone.replace(PHONE_REGEX, '');
+  
+              await prisma.sigma_cloud_neppo_integration_satisfaction_surveys.create(
+                {
+                  data: {
+                    sequential_id: desktopServiceOrder.sequential_id,
+                    defect: desktopServiceOrder.defect,
+                    registered_phone: registeredPhone,
+                    normalized_phone: cleanPhone && normalizePhoneService.normalizePhone(cleanPhone),
+                    status: 'pending',
+                    type: TYPE,
+                    started_at: momentTimezone(desktopServiceOrder.begin_date).utc().toDate()
+                  }
                 }
-              }
+              );
+
+              break;
             }
           }
-        )
-      );
-    }
+        }
+      )
+    );
   } catch (error: unknown) {
     loggerUtil.error(error instanceof Error ? error.message : String(error));
   }
