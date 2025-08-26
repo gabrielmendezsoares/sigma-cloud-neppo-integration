@@ -1,5 +1,5 @@
 import momentTimezone from 'moment-timezone';
-import { sigma_cloud_neppo_integration_satisfaction_surveys, PrismaClient } from '@prisma/client/storage/client.js';
+import { PrismaClient, sigma_cloud_neppo_integration_satisfaction_surveys } from '@prisma/client/storage/client.js';
 import { HttpClientUtil, loggerUtil } from '../../expressium/index.js';
 
 const prisma = new PrismaClient();
