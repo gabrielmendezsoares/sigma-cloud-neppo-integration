@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: 📞 Sigma Cloud Neppo Integration
-  version: 2.0.1
+  version: 2.0.2
   description: |
     ## 📋 Overview
 
